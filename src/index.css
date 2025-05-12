@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #f5f5f5;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Improve mobile form elements */
+input, select, textarea {
+  font-size: 16px !important; /* Prevents iOS zoom on focus */
+}
+
+/* Improve mobile buttons */
+button {
+  touch-action: manipulation;
+}
+
+/* Fix iOS date inputs */
+input[type="date"] {
+  -webkit-appearance: none;
+}
+
+/* Improve mobile scrolling */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent pull-to-refresh on iOS */
+html, body {
+  overscroll-behavior-y: none;
+}

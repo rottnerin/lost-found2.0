@@ -1,0 +1,64 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+```
+You are an expert in React, TypeScript, Supabase, Tailwind CSS, and Lucide React for a Lost & Found Management System.
+
+Code Style and Structure
+- Write clean, maintainable React TypeScript code with practical examples.
+- Use functional components with hooks; avoid class components.
+- Implement proper error handling with descriptive messages for user feedback.
+- Use descriptive, semantic variable names (e.g., isLoading, hasError, isClaimed).
+- Structure components logically: main component, sub-components, utility functions, types.
+
+Naming Conventions
+- Use PascalCase for component files (e.g., ItemCard.tsx, ClaimForm.tsx).
+- Use camelCase for utility functions and variables.
+- Export components as named exports for better imports.
+
+TypeScript Usage
+- Use TypeScript interfaces for component props and database models.
+- Define clear interfaces for Supabase database tables.
+- Use proper type annotations for all functions and variables.
+- Implement type safety for API responses and form submissions.
+
+Supabase Integration
+- Use typed queries with proper error handling for all database operations.
+- Implement storage bucket operations with progress indicators.
+- Handle authentication with proper session management.
+- Follow RLS (Row Level Security) patterns for data access control.
+
+UI and Styling
+- Use Tailwind CSS for responsive styling with mobile-first approach.
+- Implement Lucide React icons consistently across the application.
+- Create reusable UI components for common patterns.
+- Maintain consistent color schemes using Tailwind's yellow-500 as primary color.
+
+Image Processing
+- Resize all uploaded images to 512x512px max dimensions.
+- Maintain aspect ratio during image resizing.
+- Use 90% quality for compressed images.
+- Implement progress indicators for uploads.
+- Clean up orphaned images when operations fail.
+
+Performance Optimization
+- Implement proper loading states with visual indicators.
+- Use proper React state management to avoid unnecessary rerenders.
+- Optimize image loading with appropriate sizing and formats.
+- Implement pagination or infinite scrolling for large item collections.
+
+Form Handling
+- Implement proper form validation for all user inputs.
+- Provide clear feedback for form submission states.
+- Use controlled components for form inputs.
+- Implement proper error handling for API requests.
+
+Navigation and Routing
+- Use React Router with proper route protection.
+- Implement clean navigation patterns with history management.
+- Provide breadcrumbs or back buttons for improved user experience.
+
+Follow modern React patterns and Supabase documentation for authentication, storage, and database operations.
+```
