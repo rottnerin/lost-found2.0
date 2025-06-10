@@ -25,11 +25,19 @@ export function ItemDetailPage() {
       
       try {
         setLoading(true);
-        const { data, error } = await supabase
+        let query = supabase
           .from('items')
           .select('*')
-          .eq('id', id)
-          .single();
+          .eq('id', id);
+
+        // Hide items older than 45 days for non-admin users
+        if (!user) {
+          const cutoff = new Date();
+          cutoff.setDate(cutoff.getDate() - 45);
+          query = query.gte('created_at', cutoff.toISOString());
+        }
+
+        const { data, error } = await query.single();
 
         if (error) throw error;
         setItem(data);

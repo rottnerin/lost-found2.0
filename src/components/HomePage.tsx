@@ -81,6 +81,13 @@ const fetchAndSetItems = async () => {
       .select('*')
       .order('created_at', { ascending: false });
 
+    // Hide items older than 45 days for non-admin users
+    if (!user) {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 45);
+      query = query.gte('created_at', cutoff.toISOString());
+    }
+
     if (filters.searchQuery) {
       query = query.or(`name.ilike.%${filters.searchQuery}%,description.ilike.%${filters.searchQuery}%`);
     }
@@ -144,6 +151,13 @@ fetchAndSetItems();
           .select('*')
           .order('created_at', { ascending: false });
 
+        // Hide items older than 45 days for non-admin users
+        if (!user) {
+          const cutoff = new Date();
+          cutoff.setDate(cutoff.getDate() - 45);
+          query = query.gte('created_at', cutoff.toISOString());
+        }
+
         if (filters.searchQuery) {
           query = query.or(`name.ilike.%${filters.searchQuery}%,description.ilike.%${filters.searchQuery}%`);
         }
@@ -188,9 +202,18 @@ fetchAndSetItems();
   const fetchTags = async () => {
     try {
       setError(null);
-      const { data, error: fetchError } = await supabase
+      let query = supabase
         .from('items')
         .select('tags');
+
+      // Hide tags from items older than 45 days for non-admin users
+      if (!user) {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 45);
+        query = query.gte('created_at', cutoff.toISOString());
+      }
+
+      const { data, error: fetchError } = await query;
 
       if (fetchError) throw fetchError;
       
