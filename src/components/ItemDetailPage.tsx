@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin, Calendar, Tag, ArrowLeft, Loader2, CheckCircle, AlertCircle, Trash2, Lock } from 'lucide-react';
+import { MapPin, Calendar, Tag, ArrowLeft, Loader2, CheckCircle, Trash2, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import type { Item } from '../types/database';

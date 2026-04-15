@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, PlusCircle, LogIn, LogOut, Menu, X } from 'lucide-react';
+import { PlusCircle, LogIn, LogOut, Menu, LayoutDashboard, X } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { signOut } from '../lib/auth';
 
 export const Navbar = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const handleLogout = async () => {
@@ -60,6 +60,15 @@ export const Navbar = () => {
             <div className="hidden sm:flex items-center space-x-4">
               {user ? (
                 <>
+                  {isAdmin && (
+                    <button
+                      onClick={() => navigate('/admin')}
+                      className="flex items-center px-4 py-2 rounded-md text-white hover:bg-yellow-600 transition-colors"
+                    >
+                      <LayoutDashboard className="h-5 w-5 mr-2" />
+                      <span>Admin</span>
+                    </button>
+                  )}
                   <button
                     onClick={() => navigate('/items/new')}
                     className="flex items-center px-4 py-2 rounded-md text-white hover:bg-yellow-600 transition-colors"
@@ -94,6 +103,18 @@ export const Navbar = () => {
             <div className="flex flex-col space-y-2 px-4">
               {user ? (
                 <>
+                  {isAdmin && (
+                    <button
+                      onClick={() => {
+                        navigate('/admin');
+                        setMobileMenuOpen(false);
+                      }}
+                      className="flex items-center px-4 py-3 rounded-md text-white hover:bg-yellow-700 transition-colors"
+                    >
+                      <LayoutDashboard className="h-5 w-5 mr-3" />
+                      <span className="text-base">Admin</span>
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       navigate('/items/new');

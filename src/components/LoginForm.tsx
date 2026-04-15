@@ -18,7 +18,7 @@ export function LoginForm() {
       setError('');
       await signIn(email, password);
       navigate('/items/new');
-    } catch (err) {
+    } catch {
       setError('Invalid email or password');
     } finally {
       setLoading(false);

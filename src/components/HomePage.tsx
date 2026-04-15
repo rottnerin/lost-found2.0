@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, X, Sliders, Tag, RefreshCw, CheckCircle, Calendar, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
@@ -40,8 +40,12 @@ const DEFAULT_FILTER_STATE: FilterState = {
 // You might have already done this if you followed previous advice for AnalyticsTracker.tsx
 declare global {
   interface Window {
-    gtag?: (...args: any[]) => void; // Make gtag optional in case it's blocked or not loaded
+    gtag?: (...args: unknown[]) => void; // Make gtag optional in case it's blocked or not loaded
   }
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Unknown error';
 }
 
 export function HomePage() {
@@ -71,121 +75,7 @@ export function HomePage() {
     setActiveFilterCount(count);
   }, [filters]);
 
-  useEffect(() => {
-const fetchAndSetItems = async () => {
-  try {
-    setLoading(true);
-    setError(null);
-    let query = supabase
-      .from('items')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (filters.searchQuery) {
-      query = query.or(`name.ilike.%${filters.searchQuery}%,description.ilike.%${filters.searchQuery}%`);
-    }
-
-    if (filters.selectedTags.length > 0) {
-      query = query.contains('tags', filters.selectedTags);
-    }
-
-    if (filters.selectedCategory) {
-      query = query.contains('tags', [filters.selectedCategory]);
-    }
-
-    if (filters.claimStatus !== 'all') {
-      query = query.eq('is_claimed', filters.claimStatus === 'claimed');
-    }
-
-    if (filters.dateRange.from) {
-      query = query.gte('created_at', filters.dateRange.from);
-    }
-    
-    if (filters.dateRange.to) {
-      const toDate = new Date(filters.dateRange.to);
-      toDate.setDate(toDate.getDate() + 1);
-      query = query.lt('created_at', toDate.toISOString());
-    }
-
-    const { data, error: fetchError } = await query;
-
-    if (fetchError) throw fetchError;
-    setItems(data || []);
-  } catch (error: any) {
-    console.error('Error fetching items:', error);
-    setError('Failed to load items. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
-
-fetchAndSetItems();
-    fetchTags();
-  }, []);
-
-  useEffect(() => {
-    // Send a pageview event to Google Analytics when the HomePage mounts
-    if (window.gtag) {
-      window.gtag('config', 'G-0F8BZBLBHF', {
-        page_path: '/', // Assuming '/' is your homepage path
-        page_title: 'Homepage' // Optional: you can set a specific title
-      });
-      console.log("GA Pageview (gtag.js): Homepage"); // Optional: for debugging
-    } else {
-      console.warn("gtag not found on window. Analytics for homepage might not be sent.");
-    }
-
-    const fetchItems = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        let query = supabase
-          .from('items')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (filters.searchQuery) {
-          query = query.or(`name.ilike.%${filters.searchQuery}%,description.ilike.%${filters.searchQuery}%`);
-        }
-
-        if (filters.selectedTags.length > 0) {
-          query = query.contains('tags', filters.selectedTags);
-        }
-
-        if (filters.selectedCategory) {
-          query = query.contains('tags', [filters.selectedCategory]);
-        }
-
-        if (filters.claimStatus !== 'all') {
-          query = query.eq('is_claimed', filters.claimStatus === 'claimed');
-        }
-
-        if (filters.dateRange.from) {
-          query = query.gte('created_at', filters.dateRange.from);
-        }
-        
-        if (filters.dateRange.to) {
-          const toDate = new Date(filters.dateRange.to);
-          toDate.setDate(toDate.getDate() + 1);
-          query = query.lt('created_at', toDate.toISOString());
-        }
-
-        const { data, error: fetchError } = await query;
-
-        if (fetchError) throw fetchError;
-        setItems(data || []);
-      } catch (error: any) {
-        console.error('Error fetching items:', error);
-        setError('Failed to load items. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchItems();
-  }, []); // Empty dependency array ensures this runs only once when the component mounts
-
-  const fetchTags = async () => {
+  const fetchTags = useCallback(async () => {
     try {
       setError(null);
       const { data, error: fetchError } = await supabase
@@ -203,12 +93,84 @@ fetchAndSetItems();
       const categoryValues = CATEGORIES.map(cat => cat.value);
       const uniqueTags = [...new Set(allTags.filter(tag => !categoryValues.includes(tag)))];
       setAvailableTags(uniqueTags);
-    } catch (error: any) {
-      console.error('Error fetching tags:', error);
+    } catch (error: unknown) {
+      console.error('Error fetching tags:', getErrorMessage(error));
       setError('Failed to load tags. Please try again.');
       setAvailableTags([]);
     }
-  };
+  }, []);
+
+  const applyFilters = useCallback(() => {
+    let nextQuery = supabase
+      .from('items')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (filters.searchQuery.trim()) {
+      const escapedQuery = filters.searchQuery.trim().replace(/,/g, '\\,');
+      nextQuery = nextQuery.or(`name.ilike.%${escapedQuery}%,description.ilike.%${escapedQuery}%`);
+    }
+
+    if (filters.selectedTags.length > 0) {
+      nextQuery = nextQuery.overlaps('tags', filters.selectedTags);
+    }
+
+    if (filters.selectedCategory) {
+      nextQuery = nextQuery.contains('tags', [filters.selectedCategory]);
+    }
+
+    if (filters.claimStatus !== 'all') {
+      nextQuery = nextQuery.eq('is_claimed', filters.claimStatus === 'claimed');
+    }
+
+    if (filters.dateRange.from) {
+      nextQuery = nextQuery.gte('created_at', filters.dateRange.from);
+    }
+
+    if (filters.dateRange.to) {
+      const toDate = new Date(filters.dateRange.to);
+      toDate.setDate(toDate.getDate() + 1);
+      nextQuery = nextQuery.lt('created_at', toDate.toISOString());
+    }
+
+    return nextQuery;
+  }, [filters]);
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const { data, error: fetchError } = await applyFilters();
+
+        if (fetchError) throw fetchError;
+        setItems(data || []);
+      } catch (error: unknown) {
+        console.error('Error fetching items:', getErrorMessage(error));
+        setError('Failed to load items. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchItems();
+  }, [applyFilters, user?.id]);
+
+  useEffect(() => {
+    // Send a pageview event to Google Analytics when the HomePage mounts
+    if (window.gtag) {
+      window.gtag('config', 'G-0F8BZBLBHF', {
+        page_path: '/', // Assuming '/' is your homepage path
+        page_title: 'Homepage' // Optional: you can set a specific title
+      });
+      console.log("GA Pageview (gtag.js): Homepage"); // Optional: for debugging
+    } else {
+      console.warn("gtag not found on window. Analytics for homepage might not be sent.");
+    }
+
+    void fetchTags();
+  }, [fetchTags, user?.id]);
 
   const toggleTag = (tag: string) => {
     setFilters(prev => ({

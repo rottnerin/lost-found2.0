@@ -23,10 +23,12 @@ export interface AIAnalysis {
 }
 
 export interface ClaimFormData {
+  claimantType: 'Student' | 'Staff' | 'Parent' | '';
   firstName: string;
   lastName: string;
   childName: string;
   childGrade: string;
+  division: string;
   itemId: string;
   itemName: string;
 }
@@ -34,9 +36,11 @@ export interface ClaimFormData {
 export interface Claim {
   id: string;
   item_id: string;
+  claimant_type: 'Student' | 'Staff' | 'Parent';
   first_name: string;
   last_name: string;
   child_name: string;
   child_grade: string;
+  division: string;
   created_at: string;
 }

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { AlertCircle, Upload, Loader2, Camera, ArrowLeft, MapPin } from 'lucide-react';
+import { AlertCircle, Loader2, Camera, ArrowLeft, MapPin } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import type { AIAnalysis } from '../types/database';
 import { Navbar } from './Navbar';
@@ -189,6 +189,10 @@ const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<B
   });
 };
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Unknown error';
+}
+
 export function ItemForm() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -246,7 +250,7 @@ export function ItemForm() {
       );
 
       // Upload the resized image to Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('item-images')
         .upload(fileName, resizedImageFile, {
           cacheControl: '3600',
@@ -291,13 +295,15 @@ export function ItemForm() {
         if (analysis.name) setName(analysis.name);
         if (analysis.description) setDescription(analysis.description);
         if (Array.isArray(analysis.tags)) setTags(analysis.tags);
-      } catch (analysisError: any) {
-        console.error('Analysis error:', analysisError);
-        setError(`Image analysis failed: ${analysisError.message}. You can still manually enter item details.`);
+      } catch (analysisError: unknown) {
+        const errorMessage = getErrorMessage(analysisError);
+        console.error('Analysis error:', errorMessage);
+        setError(`Image analysis failed: ${errorMessage}. You can still manually enter item details.`);
       }
-    } catch (err: any) {
-      console.error('Error processing image:', err);
-      setError(err.message || 'Failed to process image. Please try again.');
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
+      console.error('Error processing image:', errorMessage);
+      setError(errorMessage || 'Failed to process image. Please try again.');
       
       // Clean up the uploaded image if analysis fails
       if (imageUrl) {
@@ -357,8 +363,8 @@ export function ItemForm() {
       if (insertError) throw insertError;
       
       navigate('/');
-    } catch (err: any) {
-      console.error('Error creating item:', err);
+    } catch (err: unknown) {
+      console.error('Error creating item:', getErrorMessage(err));
       setError('Failed to create item. Please try again.');
     } finally {
       setLoading(false);

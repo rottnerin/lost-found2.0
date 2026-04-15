@@ -20,21 +20,54 @@ export async function signOut() {
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    // Get current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+    let isMounted = true;
+
+    const syncAuthState = async (sessionUser: User | null) => {
+      if (!isMounted) return;
+
+      setUser(sessionUser);
+
+      if (!sessionUser?.email) {
+        setIsAdmin(false);
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('staff_emails')
+        .select('is_admin')
+        .eq('email', sessionUser.email)
+        .maybeSingle();
+
+      if (!isMounted) return;
+
+      if (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      } else {
+        setIsAdmin(Boolean(data?.is_admin));
+      }
+
       setLoading(false);
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      void syncAuthState(session?.user ?? null);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      setLoading(true);
+      void syncAuthState(session?.user ?? null);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  return { user, loading };
+  return { user, loading, isAdmin };
 }

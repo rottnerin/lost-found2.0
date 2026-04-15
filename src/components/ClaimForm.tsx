@@ -19,6 +19,10 @@ interface LocalClaimFormData {
   itemName: string;
 }
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Unknown error';
+}
+
 export function ClaimForm() {
   const { id } = useParams<{ id: string }>();
   const [item, setItem] = useState<Item | null>(null);
@@ -60,8 +64,8 @@ export function ClaimForm() {
           itemName: data.name,
           itemId: data.id
         }));
-      } catch (err: any) { // Add type annotation for better error handling
-        console.error('Error fetching item:', err);
+      } catch (err: unknown) {
+        console.error('Error fetching item:', getErrorMessage(err));
         setError('Failed to load item details. Please try again.');
       } finally {
         setItemLoading(false);
@@ -78,7 +82,7 @@ export function ClaimForm() {
 
     try {
       // **FIXED: Construct the payload based on claimantType**
-      let claimData: any = {
+      const claimData = {
         item_id: formData.itemId,
         claimant_type: formData.claimantType, // Include claimant type
         first_name: formData.firstName,
@@ -117,10 +121,10 @@ export function ClaimForm() {
       }
 
       setSuccess(true); // This line runs even if updateError exists
-    } catch (err: any) { // Improved catch block
-      console.error('Error submitting claim:', err);
-      // Provide a more specific error message if possible
-      setError(`Failed to submit claim: ${err.message || 'Unknown error'}. Please try again.`);
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
+      console.error('Error submitting claim:', errorMessage);
+      setError(`Failed to submit claim: ${errorMessage}. Please try again.`);
     } finally {
       setLoading(false);
     }
